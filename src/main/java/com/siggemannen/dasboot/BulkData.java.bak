@@ -79,7 +79,7 @@ public class BulkData implements ISQLServerBulkData
         return size;
     }
 
-    public void flush()
+    public void flush() //TODO: Not sure what it does!
     {
         roof = size;
     }

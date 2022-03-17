@@ -28,8 +28,6 @@ public class Storer
     private final ExecutorService ES = Executors.newWorkStealingPool();
     private final AtomicInteger queue = new AtomicInteger(0);
     private final AtomicInteger circle = new AtomicInteger(0);
-    private static final int MAX_ERRORS = 10;
-    private final AtomicInteger errorCount = new AtomicInteger(0);
     private int RR = -1;
 
     private final SQLServerBulkCopy[] bulk;
@@ -58,31 +56,17 @@ public class Storer
             bo.setTableLock(true); // to set bulk logged
             @SuppressWarnings("resource")
             SQLServerBulkCopy sbc = new SQLServerBulkCopy(dss.getConnection());
-            for (int ix = 0; ix < meta.size(); ix++)
-            {
-                sbc.addColumnMapping(meta.get(ix).getName(), meta.get(ix).getName());
-            }
             sbc.setDestinationTableName(destination);
             sbc.setBulkCopyOptions(bo);
             bulk[i] = sbc;
         }
     }
 
-    public void add(Object[] ss) throws Exception
+    public void add(Object[] ss) throws SQLServerException
     {
         // Stored it in bulk
         int size = bd.add(ss);
 
-        if (errorCount.get() >= MAX_ERRORS)
-        {
-            for (Result r : futures)
-            {
-                if (!r.isOk())
-                {
-                    throw r.getException();
-                }
-            }
-        }
         // Do some slicin'
         if (queue.get() > QUEUE_MAX_SIZE)
         {
@@ -143,6 +127,7 @@ public class Storer
             }
             catch (Exception ex)
             {
+                ex.printStackTrace();
             }
         }
         for (Result r : futures)
@@ -190,16 +175,14 @@ public class Storer
             currentBatch++;
             if (currentBatch % 100 == 0)
             {
-                System.out
-                        .println(
-                                "Processed " + currentBatch + " batches, in queue:" + queue.get() + ", circle is:" + circle);
+                System.out.println(
+                        "Processed " + currentBatch + " batches, in queue:" + queue.get() + ", circle is:" + circle);
                 // bd.increase();
             }
         }
         catch (Exception e)
         {
             e.printStackTrace();
-            errorCount.incrementAndGet();
             return new Result(e);
         }
         finally
