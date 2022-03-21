@@ -8,7 +8,10 @@ import java.util.stream.IntStream;
 
 import com.microsoft.sqlserver.jdbc.ISQLServerBulkData;
 
-public class BulkData implements ISQLServerBulkData
+/**
+ * Bulk implementation of {@link ISQLServerBulkData}
+ */
+class BulkData implements ISQLServerBulkData
 {
     private final Set<Integer> COLLECT;
     private final List<ColumnMeta> meta;
@@ -17,7 +20,7 @@ public class BulkData implements ISQLServerBulkData
     private final Object[] data;
     private int roof = -1;
 
-    public BulkData(List<ColumnMeta> meta, int batchSize)
+    BulkData(List<ColumnMeta> meta, int batchSize)
     {
         this.meta = meta;
         roof = batchSize;
@@ -74,20 +77,9 @@ public class BulkData implements ISQLServerBulkData
         return rowPointer < Math.min(roof, data.length);
     }
 
-    public int getSize()
-    {
-        return size;
-    }
-
     public void flush()
     {
         roof = size;
-    }
-
-    public void increase()
-    {
-        //data.clear();
-        rowPointer = -1;
     }
 
     public List<ColumnMeta> getMeta()

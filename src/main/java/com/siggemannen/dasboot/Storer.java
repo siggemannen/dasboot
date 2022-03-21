@@ -48,10 +48,10 @@ public class Storer
     public Storer(SQLServerDataSource dss, List<ColumnMeta> meta, String destination, int threads, int batchSize)
             throws SQLServerException
     {
-        bd = new BulkData(meta, batchSize);
+        this.bd = new BulkData(meta, batchSize);
         this.batchSize = batchSize;
-
-        bulk = new SQLServerBulkCopy[threads];
+        this.bulk = new SQLServerBulkCopy[threads];
+        
         for (int i = 0; i < threads; i++)
         {
             SQLServerBulkCopyOptions bo = new SQLServerBulkCopyOptions();
@@ -72,7 +72,6 @@ public class Storer
     {
         // Stored it in bulk
         int size = bd.add(ss);
-
         if (errorCount.get() >= MAX_ERRORS)
         {
             for (Result r : futures)
@@ -123,6 +122,12 @@ public class Storer
         }
     }
 
+    /**
+     * "Finish" storage by flushing data left in the buffers. This must be performed after regular storage
+     * 
+     * @return result of the whole bulk storage operation
+     * @throws Exception
+     */
     public Result flush() throws Exception
     {
         bd.flush();
@@ -193,12 +198,10 @@ public class Storer
                 System.out
                         .println(
                                 "Processed " + currentBatch + " batches, in queue:" + queue.get() + ", circle is:" + circle);
-                // bd.increase();
             }
         }
         catch (Exception e)
         {
-            e.printStackTrace();
             errorCount.incrementAndGet();
             return new Result(e);
         }

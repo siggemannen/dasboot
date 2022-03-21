@@ -1,5 +1,8 @@
 package com.siggemannen.dasboot;
 
+/**
+ * Result of bulk storage
+ */
 public class Result
 {
     private final boolean ok;
